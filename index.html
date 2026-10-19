@@ -1,0 +1,2086 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cue — one task, right in your notch</title>
+<meta name="description" content="Cue keeps exactly one task in front of you, with an optional tiny timer, so you always know what you're doing right now.">
+<meta property="og:title" content="Cue — one task, right in your notch">
+<meta property="og:description" content="Cue keeps exactly one task in front of you, with an optional tiny timer, so you always know what you're doing right now.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<script defer src="/_vercel/insights/script.js"></script>
+<meta name="theme-color" content="#060608">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23A0E0AB'/%3E%3Cstop offset='.55' stop-color='%23FFAC2E'/%3E%3Cstop offset='1' stop-color='%23A52D25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%23000'/%3E%3Cpath d='M21.6 10.4A8 8 0 1 0 21.6 21.6' fill='none' stroke='url(%23g)' stroke-width='3.4' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='16' r='2.1' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: template rhythm (sticky bar · hero with live stage · states · inside · how it works · FAQ · closing CTA),
+   near-black neutral ground, colour only from Cue's timer gradient. Deliberately dark-only. */
+:root {
+  color-scheme: dark;
+  --ink-0: #060608;
+  --ink-1: #0d0d11;
+  --ink-2: #14141a;
+  --ink-3: #1c1c24;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --text: #f2f2f5;
+  --text-soft: #c3c3cc;
+  --mute: #8a8a97;
+  --green: #a0e0ab;
+  --amber: #ffac2e;
+  --oxblood: #a52d25;
+  --over: #e86054;
+  --tc: #a0e0ab;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --isl: cubic-bezier(0.34, 1.28, 0.64, 1);
+  --car: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --font-ui: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --sf: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { background: var(--ink-0); scroll-behavior: smooth; }
+body {
+  min-height: 100vh;
+  background: var(--ink-0);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 50; background: var(--ink-0); }
+button, input { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+
+/* ============ TOP BAR ============ */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 40;
+  background: rgba(6, 6, 8, 0.74);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
+.brand svg { width: 28px; height: 28px; flex-shrink: 0; }
+.topnav { display: flex; gap: 28px; font-size: 14px; font-weight: 500; }
+.topnav a { color: var(--text-soft); transition: color 0.2s ease; }
+.topnav a:hover { color: #fff; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font: 650 14px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.3s var(--isl), box-shadow 0.3s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px -8px rgba(255, 255, 255, 0.35); }
+.btn:focus-visible, .seg button:focus-visible, .switch:focus-visible, .range:focus-visible, .ghost:focus-visible,
+.field:focus-visible, .faq summary:focus-visible, .island:focus-visible, .chip:focus-visible, .adv:focus-visible, .mb-cue:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+/* ============ TYPE ============ */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.7); box-shadow: 0 0 10px rgba(255, 255, 255, 0.35); }
+h1, h2 { font-weight: 700; letter-spacing: -0.035em; line-height: 0.98; text-wrap: balance; }
+h1 em, h2 em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  background: linear-gradient(100deg, var(--green) 10%, var(--amber) 62%, var(--over) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.08em;
+}
+
+/* ============ HERO ============ */
+.hero { position: relative; padding: 64px 0 40px; overflow: hidden; }
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 0%, #000, transparent 75%);
+  mask-image: radial-gradient(70% 60% at 50% 0%, #000, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.hero-grid { position: relative; display: grid; grid-template-columns: 0.64fr 1.36fr; gap: 48px; align-items: center; }
+.hero-copy { min-width: 0; }
+.hero-copy h1 { margin: 20px 0 22px; font-size: clamp(44px, 5.2vw, 70px); }
+.hero-copy > p { max-width: 440px; font-size: 18px; line-height: 1.55; color: var(--text-soft); }
+.hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 28px; }
+.hero-cta .note { font-size: 13px; color: var(--mute); }
+.hints { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 32px; }
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.stats { display: grid; grid-template-columns: auto auto 1fr; gap: 28px; align-items: end; max-width: 460px; }
+.stat-num { display: inline-block; font-size: 40px; font-weight: 700; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.stat-num.bump { animation: bump 0.45s var(--isl); }
+@keyframes bump { 40% { transform: scale(1.18); } }
+.stat-label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+.tmeter { display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px; }
+.tmeter-track { height: 8px; border-radius: 99px; background: var(--ink-2); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6); overflow: hidden; }
+.tmeter-fill { height: 100%; width: 100%; border-radius: inherit; background: var(--tc); box-shadow: 0 0 12px var(--tc); }
+
+/* ============ STAGE CARD ============ */
+.stage-card {
+  min-width: 0;
+  border-radius: 30px;
+  background: var(--ink-1);
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+.stage-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.stage-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--mute); }
+.readout { display: flex; gap: 6px; flex-wrap: wrap; }
+.input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mute);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.input-chip b { font-weight: 600; color: var(--text-soft); }
+.input-chip.is-true { color: #fff; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.08); }
+.input-chip.is-true b { color: #fff; }
+.stage-wrap { padding: 16px; background: radial-gradient(70% 90% at 50% 40%, var(--ink-3), var(--ink-1)); }
+.stage-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--mute);
+}
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--ink-2);
+  color: var(--text);
+  font: 600 12.5px var(--font-ui);
+  cursor: pointer;
+  transition: border-color 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+}
+.ghost:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.4); }
+.ghost:disabled { opacity: 0.4; cursor: default; }
+.ghost.live { border-color: rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.08); }
+
+.controls { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; padding: 22px 24px 24px; }
+.control { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.control.full { grid-column: 1 / -1; }
+.control-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+.control-label output { color: var(--text-soft); }
+.seg { display: flex; padding: 4px; gap: 4px; border-radius: 12px; background: var(--ink-0); border: 1px solid var(--line); }
+.seg button {
+  flex: 1;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mute);
+  font: 600 13px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.seg button:hover { color: var(--text-soft); }
+.seg button[aria-pressed="true"] { background: var(--ink-3); color: var(--text); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.toggles { display: flex; gap: 18px; align-items: center; min-height: 42px; flex-wrap: wrap; }
+.switch-row { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: var(--text-soft); cursor: pointer; }
+.switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--ink-0);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  cursor: pointer;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mute);
+  transition: translate 0.35s var(--isl), background 0.25s ease;
+}
+.switch[aria-checked="true"] { background: rgba(255, 255, 255, 0.85); box-shadow: none; }
+.switch[aria-checked="true"]::after { translate: 18px 0; background: #000; }
+.range { --fill: 30%; width: 100%; height: 24px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; border-radius: 99px; }
+.range::-webkit-slider-runnable-track { height: 6px; border-radius: 99px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.75) var(--fill), var(--ink-0) var(--fill)); box-shadow: inset 0 0 0 1px var(--line); }
+.range::-moz-range-track { height: 6px; border-radius: 99px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.75) var(--fill), var(--ink-0) var(--fill)); box-shadow: inset 0 0 0 1px var(--line); }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.5); }
+.range::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.5); }
+.tasks-in { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 8px; }
+.field {
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--ink-0);
+  color: var(--text);
+  font: 500 14px var(--font-ui);
+}
+.field::placeholder { color: var(--mute); }
+.field:focus { border-color: rgba(255, 255, 255, 0.35); outline: none; }
+.tasks-note { font-size: 12.5px; color: var(--mute); }
+
+/* ============ FAKE MAC SCREEN ============ */
+/* Logical units are points, matched to a 14" MacBook: 37 pt menu bar, 206 × 37 pt notch, 13 pt text. */
+.scaler { position: relative; width: 100%; max-width: 100%; overflow: hidden; border-radius: 22px 22px 6px 6px; }
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scale(var(--k, 1));
+  transform-origin: 0 0;
+  overflow: hidden;
+  font-family: var(--sf);
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(180deg, #2a2a30 0, #0c0c0e 2px, #050506 12px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.display {
+  position: absolute;
+  inset: 11px 11px 0;
+  overflow: hidden;
+  border-radius: 11px 11px 0 0;
+  background:
+    radial-gradient(60% 70% at 18% 20%, #36466a 0%, transparent 60%),
+    radial-gradient(55% 65% at 85% 30%, #4b3a63 0%, transparent 62%),
+    radial-gradient(70% 80% at 60% 100%, #1f4150 0%, transparent 65%),
+    linear-gradient(160deg, #1b2131, #141824 60%, #10131c);
+}
+.menubar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 37px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: rgba(16, 18, 26, 0.38);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  z-index: 2;
+}
+.menus { display: flex; gap: 18px; }
+.menus b { font-weight: 700; }
+.mb-right { display: flex; align-items: center; gap: 16px; padding-left: 40px; font-variant-numeric: tabular-nums; }
+.mb-cue {
+  position: absolute;
+  top: 6px;
+  right: 124px;
+  z-index: 7;
+  width: 28px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+.mb-cue:hover, .mb-cue[aria-expanded="true"] { background: rgba(255, 255, 255, 0.16); }
+.mb-cue svg { width: 18px; height: 18px; }
+.mb-cue.ping::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  animation: ping 1.4s ease-out infinite;
+}
+@keyframes ping { from { opacity: 0.9; scale: 0.9; } to { opacity: 0; scale: 1.35; } }
+.notch { position: absolute; top: 0; left: 50%; translate: -50% 0; width: 206px; height: 37px; background: #000; border-radius: 0 0 12px 12px; z-index: 3; }
+.notch::before, .notch::after { content: ""; position: absolute; top: 0; width: 7px; height: 7px; }
+.notch::before { left: -7px; background: radial-gradient(circle at 0 100%, transparent 6.6px, #000 7px); }
+.notch::after { right: -7px; background: radial-gradient(circle at 100% 100%, transparent 6.6px, #000 7px); }
+.cam {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 11;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #3a4870 0 18%, #141a2a 42%, #07080c 70%);
+  box-shadow: 0 0 0 1.5px #0e0e11;
+  pointer-events: none;
+}
+.desk-win {
+  position: absolute;
+  left: 70px;
+  top: 96px;
+  width: 400px;
+  height: 290px;
+  border-radius: 12px;
+  background: rgba(30, 31, 39, 0.92);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  z-index: 1;
+}
+.win-bar { display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+.win-bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.win-bar span { margin-left: auto; margin-right: auto; translate: -16px 0; }
+.win-body { display: flex; flex-direction: column; gap: 9px; padding: 18px 20px; }
+.win-body strong { font-size: 17px; color: rgba(255, 255, 255, 0.9); margin-bottom: 4px; }
+.win-body span { height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.13); }
+.desk-win.alt { left: auto; right: 60px; top: 160px; width: 210px; height: 150px; background: rgba(36, 38, 48, 0.9); }
+/* Frost: the rest of the screen dims and blurs behind the time's-up island */
+.frost {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(4, 4, 8, 0.46);
+  backdrop-filter: blur(12px) saturate(0.9);
+  -webkit-backdrop-filter: blur(12px) saturate(0.9);
+  transition: opacity 0.28s ease;
+}
+.screen.frosted .frost { opacity: 1; pointer-events: auto; }
+
+/* Menu bar dropdown (Liquid Glass stand-in) */
+.mb-drop {
+  position: absolute;
+  top: 44px;
+  right: 70px;
+  z-index: 12;
+  width: 250px;
+  padding: 8px;
+  border-radius: 22px;
+  background: rgba(36, 38, 48, 0.62);
+  backdrop-filter: blur(26px) saturate(1.4);
+  -webkit-backdrop-filter: blur(26px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 24px 50px -16px rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 13px;
+}
+.mb-drop button.row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: 600 13px var(--sf);
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.mb-drop button.row:hover { background: rgba(255, 255, 255, 0.22); }
+.mb-drop ol { list-style: none; display: flex; flex-direction: column; }
+.mb-drop li { display: flex; gap: 8px; align-items: baseline; padding: 6px 10px; border-radius: 10px; }
+.mb-drop li em { font-style: normal; color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; width: 12px; }
+.mb-drop li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-drop li small { color: rgba(255, 255, 255, 0.5); font-size: 12px; font-variant-numeric: tabular-nums; }
+.mb-drop li.is-done span { opacity: 0.4; text-decoration: line-through; }
+.mb-drop li.is-cur { background: rgba(255, 255, 255, 0.08); }
+.mb-drop p { padding: 8px 10px 4px; font-size: 12px; color: rgba(255, 255, 255, 0.5); border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 6px; }
+
+/* ============ THE ISLAND ============
+   Everything in the resting island sits in the notch row, on either side of the camera:
+   title on the left; time, pause and NEXT on the right. The timer line runs underneath.
+   The island grows evenly around the notch to fit whichever side is wider.
+   Positions are set in script (see layout()); CSS only animates between them. */
+.island {
+  --tc: #a0e0ab;
+  --ez: cubic-bezier(0.32, 0.72, 0, 1);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 10;
+  width: 206px;
+  height: 37px;
+  background: #000;
+  border-radius: 0 0 12px 12px;
+  color: #fff;
+  font-family: var(--sf);
+  font-size: 13px;
+  line-height: 18px;
+  transform-origin: 50% 0;
+  transition: width 0.42s var(--ez), height 0.42s var(--ez), border-radius 0.42s var(--ez), box-shadow 0.4s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.island.shown { box-shadow: 0 0 12px rgba(255, 255, 255, 0.07), 0 14px 30px -8px rgba(0, 0, 0, 0.65); }
+.island.m-alert { transition-duration: 0.32s; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px -10px rgba(0, 0, 0, 0.75); }
+/* concave shoulders where the island meets the top edge, like the notch itself */
+.island::before, .island::after { content: ""; position: absolute; top: 0; width: 8px; height: 8px; pointer-events: none; }
+.island::before { left: -8px; background: radial-gradient(circle at 0 100%, transparent 7.6px, #000 8px); }
+.island::after { right: -8px; background: radial-gradient(circle at 100% 100%, transparent 7.6px, #000 8px); }
+.island.pulse { animation: glow 0.9s ease; }
+@keyframes glow {
+  35% { box-shadow: 0 0 0 1px rgba(160, 224, 171, 0.35), 0 0 30px 6px rgba(160, 224, 171, 0.32), 0 14px 30px -8px rgba(0, 0, 0, 0.65); }
+}
+.ic { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
+.ic > * { position: absolute; }
+.fade { transition: opacity 0.22s ease; }
+.off { opacity: 0 !important; pointer-events: none !important; }
+
+/* tasks: one element per task, moved between slots */
+.item {
+  top: 0;
+  left: 0;
+  height: 18px;
+  max-width: 160px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: #fff;
+  will-change: transform;
+  transition: transform 0.45s var(--ez), opacity 0.4s var(--ez), color 0.4s ease, font-weight 0.4s ease, max-width 0.45s var(--ez);
+}
+.item.next { font-weight: 500; color: rgba(255, 255, 255, 0.55); }
+.item.done { font-weight: 400; color: rgba(255, 255, 255, 0.36); text-decoration: line-through; text-decoration-thickness: 1px; }
+.item.side { font-weight: 400; color: rgba(255, 255, 255, 0.55); }
+.item.noanim { transition: none; }
+.track { inset: 0; perspective: 700px; }
+.nlbl, .lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  transition: opacity 0.25s ease, right 0.42s var(--ez), top 0.42s var(--ez);
+}
+
+/* checkbox */
+.check {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity 0.16s ease, background-color 0.12s ease, border-color 0.12s ease, left 0.45s var(--ez), top 0.42s var(--ez);
+}
+.check:hover { border-color: #fff; }
+.check svg { position: absolute; inset: -1.5px; width: 18px; height: 18px; }
+.check path { fill: none; stroke: #0a0a0a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 14; stroke-dashoffset: 14; transition: stroke-dashoffset 0.22s ease; }
+.check::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.85) 50%, transparent 70%);
+  background-size: 260% 100%;
+  background-position: 130% 0;
+  opacity: 0;
+}
+.check.fill { background: var(--green); border-color: var(--green); }
+.check.fill::before { animation: shim 0.42s ease 0.06s; }
+@keyframes shim { from { opacity: 1; background-position: 130% 0; } 90% { opacity: 1; } to { opacity: 0; background-position: -30% 0; } }
+.check.checked path { stroke-dashoffset: 0; }
+
+/* time, pause, line */
+.time {
+  height: 18px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, right 0.42s var(--ez), top 0.42s var(--ez), color 0.3s ease;
+}
+.island.paused .time { opacity: 0.4; }
+.island.over .time { color: var(--over); font-weight: 600; }
+.pg {
+  width: 6px;
+  height: 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.6);
+  border-right: 2px solid rgba(255, 255, 255, 0.6);
+  opacity: 0.4;
+  transition: opacity 0.2s ease, right 0.42s var(--ez);
+}
+.pbtn {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.18s ease, background 0.2s ease, right 0.42s var(--ez), top 0.42s var(--ez);
+}
+.pbtn:hover { background: rgba(255, 255, 255, 0.26); }
+.pbtn svg { width: 9px; height: 9px; fill: currentColor; }
+.pbtn .i-play, .island.paused .pbtn .i-pause { display: none; }
+.island.paused .pbtn .i-play { display: block; }
+.line {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: opacity 0.25s ease, left 0.42s var(--ez), right 0.42s var(--ez), top 0.42s var(--ez);
+}
+.island.paused .line { opacity: 0.4; }
+.fillb { position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: inherit; background: var(--tc); box-shadow: 0 0 6px var(--tc); }
+.island.over .fillb { width: 0 !important; }
+
+/* tasks complete / add tasks */
+.cv { top: 10px; left: 16px; display: flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; }
+.cv svg { width: 14px; height: 14px; }
+.adv {
+  top: 6px;
+  left: 10px;
+  height: 26px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  font: 500 13px/26px var(--sf);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.25s ease, color 0.2s ease;
+}
+.adv:hover { color: #fff; }
+
+/* time's up */
+.av { left: 0; top: 0; width: 400px; height: 150px; padding: 0 18px; }
+.a-top { position: absolute; left: 18px; top: 49px; display: flex; align-items: center; gap: 6px; height: 16px; font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+.a-top svg { width: 13px; height: 13px; }
+.a-title { position: absolute; left: 18px; right: 18px; top: 68px; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a-row { position: absolute; left: 18px; top: 104px; display: flex; gap: 8px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: 500 13px var(--sf);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+.chip:hover { background: rgba(255, 255, 255, 0.18); }
+.chip.done { background: #fff; color: #000; padding: 0 15px; }
+.chip.done:hover { background: rgba(255, 255, 255, 0.86); }
+.chip.done svg { width: 12px; height: 12px; }
+.chip.more { padding: 0 12px; letter-spacing: 0.05em; }
+.a-row.more-open .base, .a-row:not(.more-open) .extra { display: none; }
+.av, .cv, .adv, .tv { transition: opacity 0.2s ease; }
+.island.m-alert .av { transition-delay: 0.1s; }
+
+/* reduce motion: crossfades only */
+.rm .island, .rm .item, .rm .check, .rm .time, .rm .pbtn, .rm .line, .rm .nlbl, .rm .lbl { transition-property: opacity, color, background-color !important; }
+.rm .check path { transition: none; }
+.rm .check.fill::before { animation: none; }
+.rm .island.pulse { animation: none; }
+
+.tv { inset: 0; }
+.tv > * { position: absolute; }
+.track > .item { position: absolute; }
+.lbl-done { left: 22px; top: 44px; }
+.lbl-next { right: 22px; top: 44px; }
+
+/* ============ SECTIONS ============ */
+.section { padding-top: 110px; scroll-margin-top: 70px; }
+.section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap; margin-bottom: 44px; }
+.section-head h2 { margin-top: 16px; font-size: clamp(38px, 5.2vw, 60px); }
+.section-head > p { max-width: 400px; font-size: 16px; line-height: 1.6; color: var(--text-soft); }
+
+/* states */
+.variants { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px; }
+.variants .card:nth-child(-n + 2) { grid-column: span 3; }
+.variants .card:nth-child(n + 3) { grid-column: span 2; }
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; border-radius: 26px; background: var(--ink-1); border: 1px solid var(--line); overflow: hidden; }
+.card-stage { padding: 22px; background: radial-gradient(70% 80% at 50% 50%, var(--ink-2), var(--ink-1)); }
+.card-stage .scaler { border-radius: 16px 16px 4px 4px; }
+
+/* just the bar */
+.bar-card { border-radius: 30px; background: var(--ink-1); border: 1px solid var(--line); overflow: hidden; }
+.bar-stage { padding: 28px 28px 0; background: radial-gradient(60% 100% at 50% 0%, var(--ink-3), var(--ink-1)); }
+.bar-stage .scaler { border-radius: 22px 22px 0 0; }
+.bar-foot { display: flex; justify-content: space-between; align-items: center; gap: 14px 24px; flex-wrap: wrap; padding: 20px 28px 24px; border-top: 1px solid var(--line); }
+.bar-foot p { max-width: 520px; font-size: 15px; line-height: 1.55; color: var(--text-soft); }
+.bar-steps { display: flex; gap: 8px; flex-wrap: wrap; }
+.hint.is-btn { cursor: pointer; color: var(--text); border-color: var(--line-2); transition: border-color 0.2s ease, background 0.2s ease; }
+.hint.is-btn:hover { border-color: rgba(255, 255, 255, 0.45); background: var(--ink-3); }
+.hint.is-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.85); outline-offset: 3px; }
+.hint.is-btn i { width: 18px; height: 3px; border-radius: 2px; background: var(--green); box-shadow: 0 0 6px var(--green); }
+.card-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 18px 22px 22px; border-top: 1px solid var(--line); margin-top: auto; }
+.card-meta h3 { font-size: 18px; font-weight: 650; letter-spacing: -0.02em; }
+.card-meta p { margin-top: 4px; font-size: 14px; line-height: 1.5; color: var(--mute); }
+.card-meta > code { flex-shrink: 0; padding: 3px 8px; border-radius: 7px; background: var(--ink-3); font-family: var(--font-mono); font-size: 11.5px; color: var(--text-soft); white-space: nowrap; }
+.card-meta > code.red { color: var(--over); }
+
+/* inside */
+.anatomy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.anat { padding: 28px; border-radius: 24px; background: var(--ink-1); border: 1px solid var(--line); }
+.anat-num {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 22px;
+  border-radius: 14px;
+  background: var(--ink-3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px var(--line);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.anat h3 { margin-bottom: 10px; font-size: 20px; font-weight: 650; letter-spacing: -0.02em; }
+.anat p { font-size: 15px; line-height: 1.6; color: var(--text-soft); }
+.drain { position: relative; height: 3px; margin: 2px 0 22px; border-radius: 2px; background: linear-gradient(90deg, var(--oxblood), var(--amber) 50%, var(--green)); box-shadow: 0 0 10px rgba(255, 172, 46, 0.25); }
+.drain-tags { display: flex; justify-content: space-between; margin-top: -14px; margin-bottom: 18px; font-family: var(--font-mono); font-size: 10.5px; color: var(--mute); }
+
+/* how it works */
+.how { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; align-items: start; }
+.how-card { min-width: 0; border-radius: 24px; background: var(--ink-1); border: 1px solid var(--line); overflow: hidden; }
+.how-stage {
+  display: flex;
+  justify-content: center;
+  padding: 36px 20px;
+  background:
+    radial-gradient(60% 80% at 25% 20%, rgba(54, 70, 106, 0.55), transparent 65%),
+    radial-gradient(60% 80% at 85% 70%, rgba(75, 58, 99, 0.55), transparent 65%),
+    var(--ink-2);
+  border-bottom: 1px solid var(--line);
+}
+.dd {
+  width: 330px;
+  max-width: 100%;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(40, 42, 54, 0.6);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+  font-family: var(--sf);
+  font-size: 13px;
+}
+.dd-head { display: flex; align-items: center; gap: 8px; padding: 2px 4px 12px; font-weight: 600; }
+.dd-head svg { width: 16px; height: 16px; }
+.dd-head small { margin-left: auto; font-weight: 400; color: rgba(255, 255, 255, 0.5); }
+.dd-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.dd-row em { width: 14px; font-style: normal; text-align: center; color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; }
+.dd-f { flex: 1; min-width: 0; height: 30px; display: flex; align-items: center; padding: 0 10px; border-radius: 9px; background: rgba(0, 0, 0, 0.28); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); overflow: hidden; white-space: nowrap; }
+.dd-f.ph { color: rgba(255, 255, 255, 0.35); }
+.dd-m { width: 44px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: rgba(0, 0, 0, 0.28); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); font-variant-numeric: tabular-nums; }
+.dd-row small { width: 24px; color: rgba(255, 255, 255, 0.5); font-size: 12px; }
+.dd-start { display: grid; place-items: center; height: 32px; margin: 12px 0 10px; border-radius: 10px; background: #fff; color: #000; font-weight: 600; }
+.dd-pref { display: flex; justify-content: space-between; align-items: center; padding: 7px 4px; border-top: 1px solid rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.75); }
+.dd-seg { display: flex; padding: 2px; border-radius: 8px; background: rgba(0, 0, 0, 0.3); font-size: 11.5px; }
+.dd-seg span { padding: 3px 9px; border-radius: 6px; color: rgba(255, 255, 255, 0.55); }
+.dd-seg span.on { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.dd-foot { display: flex; justify-content: space-between; padding: 9px 4px 2px; border-top: 1px solid rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.5); }
+.steps { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.steps li { padding: 24px; border-left: 1px solid var(--line); }
+.steps li:first-child { border-left: 0; }
+.steps .n { display: block; margin-bottom: 12px; font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+.steps strong { display: block; margin-bottom: 6px; font-size: 17px; font-weight: 650; letter-spacing: -0.02em; }
+.steps p { font-size: 14px; line-height: 1.55; color: var(--text-soft); }
+.api { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.api-group { padding: 20px 22px; border-radius: 20px; background: var(--ink-1); border: 1px solid var(--line); }
+.api-group h3 { margin-bottom: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.api-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.api-row:first-of-type { border-top: 0; }
+.api-row span { color: var(--mute); text-align: right; }
+.wont { list-style: none; }
+.wont li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; color: var(--text-soft); }
+.wont li:first-child { border-top: 0; }
+.wont li::before { content: ""; width: 12px; height: 1.5px; background: var(--mute); flex-shrink: 0; }
+
+/* faq */
+.faq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.faq details { border-radius: 18px; background: var(--ink-1); border: 1px solid var(--line); transition: border-color 0.2s ease; }
+.faq details[open] { border-color: var(--line-2); }
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  list-style: none;
+  cursor: pointer;
+  border-radius: 18px;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-family: var(--font-mono); font-weight: 400; color: var(--mute); transition: rotate 0.3s var(--isl); }
+.faq details[open] summary::after { rotate: 45deg; }
+.faq details p { padding: 0 20px 20px; font-size: 15px; line-height: 1.6; color: var(--text-soft); }
+
+/* cta */
+.cta {
+  position: relative;
+  margin-top: 110px;
+  padding: 80px 32px;
+  border-radius: 36px;
+  text-align: center;
+  background: radial-gradient(60% 90% at 50% 100%, rgba(160, 224, 171, 0.12), transparent 70%), var(--ink-1);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  scroll-margin-top: 80px;
+}
+.cta::after { content: ""; position: absolute; left: 20%; right: 20%; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--green), var(--amber), var(--oxblood), transparent); opacity: 0.7; }
+.cta h2 { font-size: clamp(42px, 6vw, 68px); margin: 16px 0 18px; }
+.cta > p { max-width: 460px; margin: 0 auto 32px; font-size: 17px; line-height: 1.55; color: var(--text-soft); }
+.wl { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; max-width: 480px; margin: 0 auto; }
+.wl .field { flex: 1 1 240px; height: 48px; padding: 0 16px; border-radius: 999px; font-size: 15px; background: var(--ink-0); }
+.wl .btn { height: 48px; padding: 0 22px; font-size: 15px; }
+.wl-msg { min-height: 22px; margin-top: 16px; font-size: 14px; color: var(--text-soft); }
+.wl-msg.err { color: var(--over); }
+.wl-priv { margin-top: 6px; font-size: 13px; color: var(--mute); }
+.btn .dl-i { width: 16px; height: 16px; }
+.btn-lg { height: 52px; padding: 0 26px; font-size: 16px; }
+.note-link { font-size: 13px; color: var(--mute); text-decoration: underline; text-underline-offset: 3px; }
+.note-link:hover { color: #fff; }
+.dl-meta { margin: 16px auto 0 !important; font-size: 13px !important; color: var(--mute) !important; }
+.first-open { max-width: 520px; margin: 36px auto 0; padding: 22px 24px; border-radius: 20px; background: var(--ink-0); border: 1px solid var(--line); text-align: left; }
+.first-open h3 { margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.first-open ol { display: flex; flex-direction: column; gap: 10px; padding-left: 20px; font-size: 15px; line-height: 1.5; color: var(--text-soft); }
+.first-open b { color: var(--text); font-weight: 600; }
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  padding: 40px 0 48px;
+  font-size: 13px;
+  color: var(--mute);
+}
+.footer .brand { font-size: 16px; color: var(--text); }
+.footer .brand svg { width: 22px; height: 22px; }
+.foot-links { display: flex; gap: 18px; }
+.foot-links a { color: rgba(255, 255, 255, 0.5); transition: color 0.2s ease; }
+.foot-links a:hover { color: #fff; }
+
+/* entrances */
+.intro { animation: intro 0.9s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 110ms + 80ms); }
+@keyframes intro { from { opacity: 0; translate: 0 22px; } }
+
+/* responsive */
+@media (max-width: 1040px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .how { grid-template-columns: 1fr; }
+  .anatomy { grid-template-columns: 1fr; }
+}
+@media (max-width: 820px) {
+  .variants .card:nth-child(n) { grid-column: 1 / -1; }
+  .faq { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+  .steps li { border-left: 0; border-top: 1px solid var(--line); }
+  .steps li:first-child { border-top: 0; }
+}
+@media (max-width: 760px) {
+  .topnav { display: none; }
+  .controls { grid-template-columns: 1fr; padding: 18px; }
+  .tasks-in { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: auto auto; }
+  .tmeter { grid-column: 1 / -1; }
+  .section { padding-top: 80px; }
+  .card-meta { flex-direction: column; gap: 10px; }
+  .cta { padding: 56px 20px; margin-top: 80px; }
+  .stage-wrap { padding: 10px; }
+  .topbar .btn { height: 36px; padding: 0 14px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .intro, .stat-num.bump, .mb-cue.ping::after { animation: none; }
+}
+</style>
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="cue-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A0E0AB"/>
+      <stop offset="0.55" stop-color="#FFAC2E"/>
+      <stop offset="1" stop-color="#A52D25"/>
+    </linearGradient>
+  </defs>
+  <symbol id="cue-mark" viewBox="0 0 32 32">
+    <path d="M22.4 9.6A9 9 0 1 0 22.4 22.4" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>
+    <circle cx="25.4" cy="16" r="2.3" fill="currentColor"/>
+  </symbol>
+  <symbol id="cue-icon" viewBox="0 0 32 32">
+    <rect width="32" height="32" rx="8" fill="#000"/>
+    <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="none" stroke="rgba(255,255,255,0.16)"/>
+    <path d="M21.6 10.4A8 8 0 1 0 21.6 21.6" fill="none" stroke="url(#cue-grad)" stroke-width="3.2" stroke-linecap="round"/>
+    <circle cx="24.2" cy="16" r="2" fill="#fff"/>
+  </symbol>
+</svg>
+
+<template id="isl-tpl">
+  <div class="ic">
+    <div class="tv">
+      <div class="track"></div>
+      <span class="lbl lbl-done">Done</span>
+      <span class="lbl lbl-next">Up next</span>
+      <button class="check off" type="button" tabindex="-1" aria-label="Mark task done"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M5 9.4l2.7 2.7L13.2 6.3"/></svg></button>
+      <span class="time off"></span>
+      <i class="pg off" aria-hidden="true"></i>
+      <button class="pbtn off" type="button" tabindex="-1" aria-label="Pause or resume timer">
+        <svg class="i-pause" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1" width="2.4" height="8" rx="0.8"/><rect x="6.1" y="1" width="2.4" height="8" rx="0.8"/></svg>
+        <svg class="i-play" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 1.2v7.6c0 .4.4.6.7.4l5.8-3.8a.5.5 0 0 0 0-.8L3.2.8c-.3-.2-.7 0-.7.4z"/></svg>
+      </button>
+      <span class="nlbl off">Next</span>
+      <div class="line off"><div class="fillb"></div></div>
+    </div>
+    <div class="cv off"><svg viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="#A0E0AB" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.2 7.4l3.1 3.1 6.5-6.9"/></svg><span>Tasks complete</span></div>
+    <button class="adv off" type="button">+ Add tasks</button>
+    <div class="av off">
+      <div class="a-top"><svg viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="7" cy="7.6" r="5.2"/><path d="M7 4.9v2.7l1.8 1.1M2.4 2.6l1.4-1.1"/></svg>Time's up</div>
+      <div class="a-title"></div>
+      <div class="a-row">
+        <button class="chip done" type="button"><svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.4 6.3l2.3 2.3 4.9-5.1"/></svg>Done</button>
+        <button class="chip base" type="button" data-add="5">5 min</button>
+        <button class="chip base" type="button" data-add="20">20 min</button>
+        <button class="chip base" type="button" data-add="30">30 min</button>
+        <button class="chip base more" type="button" aria-label="More times">...</button>
+        <button class="chip extra" type="button" data-add="10">10 min</button>
+        <button class="chip extra" type="button" data-add="45">45 min</button>
+        <button class="chip extra" type="button" data-add="60">60 min</button>
+        <button class="chip extra back" type="button" aria-label="Back">&#8249;</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Cue home"><svg aria-hidden="true"><use href="#cue-icon"/></svg>Cue</a>
+    <nav class="topnav" aria-label="Sections">
+      <a href="#try">Try it</a><a href="#how">How it works</a><a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn" href="https://github.com/chaseships/cue-releases/releases/latest/download/Cue.zip"><svg class="dl-i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8m0 0L4.8 7.3M8 10.5l3.2-3.2M3 13.5h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Download for Mac</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ============ HERO / LIVE DEMO ============ -->
+  <section class="hero" id="try">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow intro" style="--i: 0">Notch widget for Mac</span>
+        <h1 class="intro" style="--i: 1">One task. <em>Right where you look.</em></h1>
+        <p class="intro" style="--i: 2">To-do apps show you everything, so you stop looking. Cue puts one task at the top-middle of your screen, where your eyes already go, and checks in when your time is up.</p>
+        <div class="hints intro" style="--i: 3">
+          <span class="hint">Click the circle to finish</span>
+          <span class="hint">Hover to pause</span>
+          <span class="hint">Click the island to expand</span>
+          <span class="hint">Let the timer run out</span>
+          <button class="hint is-btn" type="button" id="try-bar"><i aria-hidden="true"></i>Try just the bar</button>
+        </div>
+        <div class="stats intro" style="--i: 4">
+          <div><span class="stat-num" id="c-done">0</span><span class="stat-label">Tasks done</span></div>
+          <div><span class="stat-num" id="c-added">0</span><span class="stat-label">Minutes added</span></div>
+          <div class="tmeter">
+            <span class="stat-label">Time left <span id="c-left">100%</span></span>
+            <div class="tmeter-track"><div class="tmeter-fill" id="c-left-fill"></div></div>
+          </div>
+        </div>
+        <div class="hero-cta intro" style="--i: 5">
+          <a class="btn" href="https://github.com/chaseships/cue-releases/releases/latest/download/Cue.zip"><svg class="dl-i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8m0 0L4.8 7.3M8 10.5l3.2-3.2M3 13.5h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Download for Mac</a>
+          <a class="note-link" href="#download">First time opening it? Read this.</a>
+        </div>
+      </div>
+
+      <div class="stage-card intro" style="--i: 4">
+        <div class="stage-bar">
+          <span class="stage-label">ISLAND STATE</span>
+          <div class="readout" aria-hidden="true">
+            <span class="input-chip" id="r-task">Task <b>1 of 3</b></span>
+            <span class="input-chip" id="r-paused">Paused <b>false</b></span>
+            <span class="input-chip" id="r-hover">Hover <b>false</b></span>
+          </div>
+        </div>
+        <div class="stage-wrap">
+          <div class="scaler" data-w="880" data-h="440">
+            <div class="screen" id="screen">
+<div class="display">
+              <div class="desk-win" aria-hidden="true">
+                <div class="win-bar"><i></i><i></i><i></i><span>Launch notes</span></div>
+                <div class="win-body">
+                  <strong>Intro</strong>
+                  <span style="width: 92%"></span><span style="width: 86%"></span><span style="width: 95%"></span><span style="width: 60%"></span>
+                  <span style="width: 0; height: 6px; background: none"></span>
+                  <span style="width: 90%"></span><span style="width: 78%"></span><span style="width: 84%"></span><span style="width: 40%"></span>
+                </div>
+              </div>
+              <div class="desk-win alt" aria-hidden="true">
+                <div class="win-bar"><i></i><i></i><i></i></div>
+                <div class="win-body"><span style="width: 80%"></span><span style="width: 64%"></span><span style="width: 72%"></span></div>
+              </div>
+              <div class="menubar" aria-hidden="true">
+                <div class="menus"><b>Notes</b><span>File</span><span>Edit</span><span>View</span><span>Format</span><span>Window</span></div>
+                <div class="mb-right"><span style="width: 26px"></span><span id="clock">Sun 8:51 PM</span></div>
+              </div>
+              <div class="notch" aria-hidden="true"></div>
+              <div class="cam" aria-hidden="true"></div>
+              <div class="frost" id="frost"></div>
+              <button class="mb-cue" id="mb-cue" type="button" aria-label="Cue menu" aria-expanded="false" aria-controls="mb-drop"><svg aria-hidden="true"><use href="#cue-mark"/></svg></button>
+              <div class="mb-drop" id="mb-drop" hidden></div>
+              <div class="island" id="island" tabindex="0" role="group" aria-label="Cue island. Space or Enter checks off the task, P pauses, Escape dismisses time's up."></div>
+</div>
+            </div>
+          </div>
+        </div>
+        <div class="stage-foot">
+          <span id="foot-hint">On a phone, tap the island to show its controls.</span>
+          <button class="ghost" id="dismiss" type="button" disabled>Dismiss time's up</button>
+        </div>
+        <div class="controls">
+          <div class="control">
+            <span class="control-label" id="lbl-vis">Visibility</span>
+            <div class="seg" data-control="vis" role="group" aria-labelledby="lbl-vis">
+              <button type="button" data-value="always" aria-pressed="true">Always</button>
+              <button type="button" data-value="peek" aria-pressed="false">Peek</button>
+            </div>
+          </div>
+          <div class="control">
+            <span class="control-label" id="lbl-preset">Quick setup</span>
+            <div class="seg" id="preset" role="group" aria-labelledby="lbl-preset">
+              <button type="button" data-preset="default" aria-pressed="true">Default</button>
+              <button type="button" data-preset="bar" aria-pressed="false">Just the bar</button>
+            </div>
+          </div>
+          <div class="control">
+            <span class="control-label" id="lbl-layout">Layout</span>
+            <div class="seg" data-control="layout" role="group" aria-labelledby="lbl-layout">
+              <button type="button" data-value="one" aria-pressed="true">One task</button>
+              <button type="button" data-value="three" aria-pressed="false">Three</button>
+            </div>
+          </div>
+          <div class="control">
+            <span class="control-label" id="lbl-frost">Time's up</span>
+            <div class="seg" data-control="frost" role="group" aria-labelledby="lbl-frost">
+              <button type="button" data-value="frost" aria-pressed="true">Frost</button>
+              <button type="button" data-value="island" aria-pressed="false">Island only</button>
+            </div>
+          </div>
+          <div class="control full">
+            <div class="toggles">
+              <label class="switch-row"><button type="button" class="switch" role="switch" aria-checked="true" id="sw-exact"></button>Show exact time</label>
+              <label class="switch-row"><button type="button" class="switch" role="switch" aria-checked="true" id="sw-task"></button>Show task title</label>
+              <label class="switch-row"><button type="button" class="switch" role="switch" aria-checked="false" id="sw-rm"></button>Reduce motion</label>
+            </div>
+          </div>
+          <div class="control">
+            <label class="control-label" for="tm-range">Max title width · <output id="tm-val">160 pt</output></label>
+            <input class="range" id="tm-range" type="range" min="160" max="400" step="10" value="160">
+          </div>
+          <div class="control">
+            <label class="control-label" for="demo-range">Demo timer · <output id="demo-val">25 s</output></label>
+            <input class="range" id="demo-range" type="range" min="10" max="60" step="1" value="25">
+          </div>
+          <div class="control full">
+            <span class="control-label" id="lbl-tasks">Your tasks</span>
+            <div class="tasks-in" role="group" aria-labelledby="lbl-tasks">
+              <input class="field task-in" id="task-1" type="text" maxlength="60" value="Write the intro" aria-label="First task" autocomplete="off">
+              <input class="field task-in" id="task-2" type="text" maxlength="60" value="Answer three emails" aria-label="Second task" autocomplete="off">
+              <input class="field task-in" id="task-3" type="text" maxlength="60" value="Take a walk" aria-label="Third task" autocomplete="off">
+              <button class="ghost" id="restart" type="button">Start</button>
+            </div>
+            <span class="tasks-note">The first task runs on the demo timer, the second gets 15 seconds more, the third has no timer.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ JUST THE BAR ============ -->
+  <section class="section" id="bar">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Just the bar</span>
+          <h2>Your notch, <em>on task.</em></h2>
+        </div>
+        <p>Turn off the task title and the exact time, and Cue becomes a thin line under your notch that drains as you work. You see how much time is left without reading a word.</p>
+      </div>
+      <div class="bar-card">
+        <div class="bar-stage">
+          <div class="scaler" data-w="900" data-h="240">
+            <div class="screen mini" aria-hidden="true">
+              <div class="display">
+              <div class="desk-win" style="left: 90px; top: 74px; width: 380px; height: 220px"><div class="win-bar"><i></i><i></i><i></i><span>Launch notes</span></div><div class="win-body"><strong>Intro</strong><span style="width: 92%"></span><span style="width: 84%"></span><span style="width: 70%"></span></div></div>
+              <div class="desk-win alt" style="right: 110px; top: 120px"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><span style="width: 80%"></span><span style="width: 64%"></span></div></div>
+              <div class="menubar"><div class="menus"><b>Notes</b><span>File</span><span>Edit</span><span>View</span><span>Format</span><span>Window</span></div><div class="mb-right"><span>9:41 AM</span></div></div>
+              <div class="notch"></div><div class="cam"></div>
+              <div class="island" data-mini="bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bar-foot">
+          <p>Hover the bar when you want the details: the task and the time open out of the notch, then tuck back in when you move away.</p>
+          <div class="bar-steps">
+            <button class="ghost" type="button" id="bar-apply">Turn it on in the demo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATES ============ -->
+  <section class="section" id="states">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">States</span>
+          <h2>One island, <em>many moods.</em></h2>
+        </div>
+        <p>Every state is the same little island, from a quiet task under the notch to a check-in that won't let your timer slip by.</p>
+      </div>
+      <div class="variants">
+        <article class="card">
+          <div class="card-stage">
+            <div class="scaler" data-w="720" data-h="200">
+              <div class="screen mini" aria-hidden="true">
+<div class="display">
+                <div class="desk-win" style="left: 40px; top: 70px; width: 240px; height: 160px"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><span style="width: 80%"></span><span style="width: 64%"></span></div></div>
+                <div class="menubar"><div class="menus"><b>Notes</b><span>File</span><span>Edit</span></div><div class="mb-right"><span>9:41 AM</span></div></div>
+                <div class="notch"></div><div class="cam"></div>
+                <div class="island" data-mini="peek"></div>
+</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-meta"><div><h3>Peek</h3><p>Stays hidden inside the notch, then slides out with the checkbox ready when your cursor comes near.</p></div><code>Visibility: Peek</code></div>
+        </article>
+        <article class="card">
+          <div class="card-stage">
+            <div class="scaler" data-w="720" data-h="200">
+              <div class="screen mini" aria-hidden="true">
+<div class="display">
+                <div class="desk-win" style="left: 60px; top: 80px; width: 280px; height: 160px"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><span style="width: 80%"></span><span style="width: 64%"></span></div></div>
+                <div class="menubar"><div class="menus"><b>Notes</b><span>File</span><span>Edit</span><span>View</span></div><div class="mb-right"><span>9:41 AM</span></div></div>
+                <div class="notch"></div><div class="cam"></div>
+                <div class="island" data-mini="three"></div>
+</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-meta"><div><h3>Three-up</h3><p>Done on the left, now in the middle, up next on the right, turning like a label on a bottle.</p></div><code>Layout: Three</code></div>
+        </article>
+        <article class="card">
+          <div class="card-stage">
+            <div class="scaler" data-w="660" data-h="230">
+              <div class="screen mini frosted" aria-hidden="true">
+<div class="display">
+                <div class="desk-win" style="left: 30px; top: 70px; width: 220px; height: 160px"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><strong>Intro</strong><span style="width: 80%"></span><span style="width: 64%"></span></div></div>
+                <div class="menubar"><div class="menus"><b>Notes</b><span>File</span></div><div class="mb-right"><span>9:41 AM</span></div></div>
+                <div class="notch"></div><div class="cam"></div>
+                <div class="frost"></div>
+                <div class="island" data-mini="alert"></div>
+</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-meta"><div><h3>Time's up</h3><p>The island springs down from the notch, the rest of the screen frosts, and you pick Done or more time.</p></div><code>Time's up: Frost</code></div>
+        </article>
+        <article class="card">
+          <div class="card-stage">
+            <div class="scaler" data-w="660" data-h="230">
+              <div class="screen mini" aria-hidden="true">
+<div class="display">
+                <div class="desk-win" style="left: 30px; top: 70px; width: 220px; height: 160px"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><span style="width: 80%"></span><span style="width: 64%"></span></div></div>
+                <div class="menubar"><div class="menus"><b>Notes</b><span>File</span></div><div class="mb-right"><span>9:41 AM</span></div></div>
+                <div class="notch"></div><div class="cam"></div>
+                <div class="island" data-mini="over"></div>
+</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-meta"><div><h3>Overtime</h3><p>Dismiss it and keep going; the time counts up in red so you know how far over you are.</p></div><code class="red">+2:48</code></div>
+        </article>
+        <article class="card">
+          <div class="card-stage">
+            <div class="scaler" data-w="660" data-h="230">
+              <div class="screen mini" aria-hidden="true">
+<div class="display">
+                <div class="desk-win" style="left: 30px; top: 70px; width: 220px; height: 160px"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><span style="width: 80%"></span><span style="width: 64%"></span></div></div>
+                <div class="menubar"><div class="menus"><b>Notes</b><span>File</span></div><div class="mb-right"><span>9:41 AM</span></div></div>
+                <div class="notch"></div><div class="cam"></div>
+                <div class="island" data-mini="done"></div>
+</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-meta"><div><h3>All done</h3><p>A green check and "Tasks complete," then a quiet "+ Add tasks" for the next round.</p></div><code>3 of 3</code></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INSIDE ============ -->
+  <section class="section" id="inside">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Inside</span>
+          <h2>What's <em>inside</em> the notch.</h2>
+        </div>
+        <p>Three small pieces do all the work: a timer you can read at a glance, a carousel that moves you forward, and a check-in that waits for you.</p>
+      </div>
+      <div class="anatomy">
+        <article class="anat">
+          <div class="anat-num">01</div>
+          <h3>A timer line that drains.</h3>
+          <p>A 3 pt line shifts from green to amber at the halfway mark to deep red at the end. It tracks a real end time, so it stays right after sleep or a restart. Pause it anytime.</p>
+        </article>
+        <article class="anat">
+          <div class="anat-num">02</div>
+          <h3>Tasks that turn, not jump.</h3>
+          <p>Finish a task and the circle fills green, becomes a check, then the next task swivels in from the right. One spring, about half a second, no bounce.</p>
+        </article>
+        <article class="anat">
+          <div class="anat-num">03</div>
+          <h3>A check-in, not an alarm.</h3>
+          <p>When time's up the island asks once: Done, or 5, 20, 30 more minutes. It never steals your keyboard, and you can dismiss it from the menu bar.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">How it works</span>
+          <h2>Three tasks. <em>Zero</em> clutter.</h2>
+        </div>
+        <p>No projects, no tags, no inbox. Just the next thing.</p>
+      </div>
+      <div class="how">
+        <div class="how-card">
+          <div class="how-stage">
+            <div class="dd" aria-label="The Cue menu bar dropdown" role="img">
+              <div class="dd-head"><svg aria-hidden="true"><use href="#cue-mark"/></svg>Cue<small>Up to 3 tasks</small></div>
+              <div class="dd-row"><em>1</em><span class="dd-f">Write the intro</span><span class="dd-m">25</span><small>min</small></div>
+              <div class="dd-row"><em>2</em><span class="dd-f">Answer three emails</span><span class="dd-m">40</span><small>min</small></div>
+              <div class="dd-row"><em>3</em><span class="dd-f">Take a walk</span><span class="dd-m"></span><small>min</small></div>
+              <div class="dd-start">Start</div>
+              <div class="dd-pref"><span>Visibility</span><span class="dd-seg"><span class="on">Always</span><span>Peek</span></span></div>
+              <div class="dd-pref"><span>Layout</span><span class="dd-seg"><span class="on">One task</span><span>Three</span></span></div>
+              <div class="dd-foot"><span>Clear all</span><span>Quit</span></div>
+            </div>
+          </div>
+          <ol class="steps">
+            <li><span class="n">Step 1</span><strong>Add up to three.</strong><p>Click the Cue icon in your menu bar and type your tasks, each with optional minutes.</p></li>
+            <li><span class="n">Step 2</span><strong>Look up.</strong><p>Task one sits in your notch with a thin timer under it.</p></li>
+            <li><span class="n">Step 3</span><strong>Check it off.</strong><p>The next one turns into place. After the third, Cue tells you you're done.</p></li>
+          </ol>
+          <!-- Launch video slot: drop the screen recording here once it exists (Milestone 4). -->
+        </div>
+        <div class="api">
+          <div class="api-group">
+            <h3>Preferences</h3>
+            <div class="api-row">Visibility <span>Always / Peek</span></div>
+            <div class="api-row">Layout <span>One task / Three</span></div>
+            <div class="api-row">Time's up <span>Frost / Island only</span></div>
+            <div class="api-row">Show exact time <span>On / Off</span></div>
+            <div class="api-row">Show task title <span>On / Off</span></div>
+            <div class="api-row">Max title width <span>160 pt and up</span></div>
+            <div class="api-row">Show over full-screen apps <span>On / Off</span></div>
+            <div class="api-row">Open at login <span>On / Off</span></div>
+          </div>
+          <div class="api-group">
+            <h3>What Cue won't do</h3>
+            <ul class="wont">
+              <li>More than three tasks</li>
+              <li>Projects or tags</li>
+              <li>Accounts or sync</li>
+              <li>Nag you twice for the same task</li>
+              <li>Take your keyboard focus</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">FAQ</span>
+          <h2>Short <em>answers.</em></h2>
+        </div>
+        <p>Everything you might want to know before you download.</p>
+      </div>
+      <div class="faq">
+        <details><summary>Is it free?</summary><p>Yes.</p></details>
+        <details><summary>Which Macs?</summary><p>Macs with a notch running macOS 26 or newer.</p></details>
+        <details><summary>Does it need an account or the internet?</summary><p>No. Your tasks stay on your Mac.</p></details>
+        <details><summary>Will it interrupt my typing?</summary><p>No. Cue never takes keyboard focus; the time's-up check-in waits for a click.</p></details>
+        <details><summary>Can I add more than three tasks?</summary><p>No, on purpose.</p></details>
+        <details><summary>Why does macOS say it can't check Cue?</summary><p>Cue isn't notarized by Apple yet, so macOS asks you to confirm the first time. Open Cue once, then go to System Settings → Privacy &amp; Security and click Open Anyway. You only do this once.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLOSING CTA ============ -->
+  <section class="wrap">
+    <div class="cta" id="download">
+      <span class="eyebrow">Your turn</span>
+      <h2>Go on, <em>pick one thing.</em></h2>
+      <p>Let the timer above run out and see how Cue checks in. Then put it in your own notch.</p>
+      <a class="btn btn-lg" href="https://github.com/chaseships/cue-releases/releases/latest/download/Cue.zip"><svg class="dl-i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8m0 0L4.8 7.3M8 10.5l3.2-3.2M3 13.5h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Download Cue for Mac</a>
+      <p class="dl-meta">Free · Version 0.1 · Mac with a notch, macOS 26 or newer</p>
+      <div class="first-open">
+        <h3>Opening Cue the first time</h3>
+        <ol>
+          <li>Open the download. Drag <b>Cue</b> into your <b>Applications</b> folder.</li>
+          <li>Open Cue. macOS will say it can't check it for malware. Click <b>Done</b>.</li>
+          <li>Go to <b>System Settings → Privacy &amp; Security</b>, scroll down, and click <b>Open Anyway</b> next to Cue.</li>
+          <li>Confirm with your password or Touch ID. Look for the Cue icon in your menu bar.</li>
+        </ol>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <span class="brand"><svg aria-hidden="true"><use href="#cue-icon"/></svg>Cue</span>
+      <span>Requires a Mac with a notch and macOS 26 or newer.</span>
+      <span>© 2026 Cue. Made in Michigan.</span>
+    </footer>
+  </section>
+</main>
+
+<div class="sr" id="sr" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const sysRM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- scale the fake screens to their containers ---------- */
+  const ro = new ResizeObserver((entries) => {
+    for (const e of entries) {
+      const el = e.target;
+      const k = el.clientWidth / Number(el.dataset.w);
+      el.style.setProperty("--k", k);
+      el.style.height = Number(el.dataset.h) * k + "px";
+    }
+  });
+  $$(".scaler").forEach((el) => {
+    const sc = el.firstElementChild;
+    sc.style.width = el.dataset.w + "px";
+    sc.style.height = el.dataset.h + "px";
+    ro.observe(el);
+  });
+
+  /* ---------- build every island from one template ---------- */
+  const tpl = $("#isl-tpl");
+  $$(".island").forEach((el) => {
+    el.appendChild(tpl.content.cloneNode(true));
+    el._items = new Map();
+    el._q = (s) => el.querySelector(s);
+  });
+
+  /* ---------- measuring and colour ---------- */
+  const SF = '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif';
+  const mctx = document.createElement("canvas").getContext("2d");
+  const wcache = new Map();
+  function tw(text, weight = 600, size = 13) {
+    const key = weight + "|" + size + "|" + text;
+    let w = wcache.get(key);
+    if (w == null) {
+      mctx.font = weight + " " + size + "px " + SF;
+      w = Math.ceil(mctx.measureText(text).width) + 1;
+      wcache.set(key, w);
+    }
+    return w;
+  }
+  const G = [160, 224, 171], A = [255, 172, 46], O = [165, 45, 37];
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  function tcol(f) {
+    f = Math.max(0, Math.min(1, f));
+    const c = f >= 0.5 ? mix(G, A, (1 - f) / 0.5) : mix(A, O, (0.5 - f) / 0.5);
+    return "rgb(" + c.join(",") + ")";
+  }
+  const fmt = (s) => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  const digitsKey = (t) => (t || "").replace(/\d/g, "0");
+
+  /* =========================================================
+     LAYOUT — measured from the real app (points):
+     notch 206 × 37 · row centre 21 · line at 41, 3 tall · island 50 tall
+     16 pad · 10 gap to the notch · island = notch + 2 × (wider side + 26)
+     expanded 578 × 118 · time's up 400 × 150
+     ========================================================= */
+  const NOTCH = 206, NOTCH_H = 37, PAD = 16, GAP = 10, ROW_TOP = 12, LINE_TOP = 41;
+  const NEXT_W = tw("NEXT", 600, 10) + 4;
+  const set = (el, on) => el.classList.toggle("off", !on);
+  const px = (n) => Math.round(n) + "px";
+
+  function layout(isl, v) {
+    const q = isl._q;
+    const tv = q(".tv"), cv = q(".cv"), adv = q(".adv"), av = q(".av");
+    const ck = q(".check"), time = q(".time"), pg = q(".pg"), pbtn = q(".pbtn"), nlbl = q(".nlbl");
+    const line = q(".line"), ldone = q(".lbl-done"), lnext = q(".lbl-next");
+    const c = isl.classList;
+    const mode = v.mode;
+    ["hidden", "row", "expanded", "alert", "complete", "add"].forEach((m) => c.toggle("m-" + m, m === mode));
+    c.toggle("shown", mode !== "hidden");
+    c.toggle("paused", !!v.paused && !v.over);
+    c.toggle("over", !!v.over);
+
+    const tasks = v.tasks || [];
+    const cur = v.cur || 0;
+    const tTitle = tasks[cur] ? tasks[cur].title : "";
+    const nTitle = tasks[cur + 1] ? tasks[cur + 1].title : "";
+    const pTitle = tasks[cur - 1] ? tasks[cur - 1].title : "";
+    const timeText = v.timeText || "";
+    const timeW = timeText ? tw(digitsKey(timeText), v.over ? 600 : 400) : 0;
+    const titleMax = v.titleMax || 160;
+
+    let W = NOTCH, H = NOTCH_H, R = 12;
+    const pos = new Map(); // item index -> {x, y, cls, op, max}
+    let showCk = false, ckX = PAD, ckY = ROW_TOP;
+    let showTime = false, timeR = PAD, timeY = ROW_TOP;
+    let showPb = false, pbR = PAD, pbY = ROW_TOP - 1;
+    let showPg = false, pgR = PAD;
+    let showNl = false, nlR = PAD;
+    let showLine = false, lineL = PAD, lineR = PAD, lineY = LINE_TOP;
+    let showDone = false, showNext = false;
+
+    if (mode === "row") {
+      const showT = v.showTitle && !!tTitle;
+      showCk = !!v.hover || !!v.busy;
+      const t0 = showT ? Math.min(tw(tTitle), titleMax) : 0;
+      const L = showT ? (showCk ? 26 : 0) + t0 : 0;
+      let r = PAD;
+      const nShown = showT && !!nTitle;
+      let nW = 0, nextR = PAD;
+      if (nShown) { nW = Math.min(tw(nTitle, 500), 140); nextR = r; r += nW + 6; nlR = r; r += NEXT_W + 10; showNl = true; }
+      showPb = !!v.hover && v.hasTimer && !v.over && !v.busy;
+      if (showPb) { pbR = r; r += 20 + 8; }
+      showPg = !!v.paused && !v.over && (!v.hover || !!v.busy);
+      if (showPg) { pgR = r; r += 6 + 5; }
+      showTime = v.hasTimer && (v.exact || v.over) && !!timeText;
+      if (showTime) { timeR = r; r += timeW; }
+      const Rw = r - PAD;
+      const empty = !L && !Rw && !showCk;
+      const side = empty ? 8 : Math.max(showCk && !showT ? 26 : L, Rw) + PAD + GAP;
+      W = NOTCH + 2 * side;
+      H = empty && !v.hasTimer ? NOTCH_H : 50;
+      R = empty && !v.hasTimer ? 12 : 16;
+      showLine = v.hasTimer;
+      lineL = lineR = empty ? 12 : PAD;
+      const curX = PAD + (showCk ? 26 : 0);
+      tasks.forEach((t, i) => {
+        const d = i - cur;
+        if (d === 0) pos.set(i, { x: curX, y: ROW_TOP, cls: "", op: showT ? 1 : 0, max: titleMax });
+        else if (d === 1) pos.set(i, { x: W - nextR - nW, y: ROW_TOP, cls: "next", op: nShown ? 1 : 0, max: 140 });
+        else if (d > 1) pos.set(i, { x: W + 24, y: ROW_TOP, cls: "next", op: 0, max: 140 });
+        else pos.set(i, { x: PAD - 44, y: ROW_TOP, cls: "", op: 0, max: titleMax });
+      });
+    } else if (mode === "expanded") {
+      const sideW = 150, outer = 22;
+      let cw = 578 - 2 * outer - 2 * sideW - 2 * PAD;
+      const need = tTitle ? tw(tTitle) + 26 : 0;
+      W = 578;
+      if (need > cw) { W = Math.min(700, 578 + (need - cw)); cw = W - 2 * outer - 2 * sideW - 2 * PAD; }
+      H = v.hasTimer ? 118 : 104;
+      R = 28;
+      showCk = true;
+      const c0 = Math.min(tw(tTitle), cw - 26);
+      const start = W / 2 - (26 + c0) / 2;
+      ckX = start; ckY = 65;
+      tasks.forEach((t, i) => {
+        const d = i - cur;
+        const w = Math.min(tw(t.title, 400), sideW);
+        if (d === 0) pos.set(i, { x: start + 26, y: 65, cls: "", op: 1, max: cw - 26 });
+        else if (d === -1) pos.set(i, { x: outer, y: 65, cls: "done", op: 1, max: sideW, rot: -14 });
+        else if (d === 1) pos.set(i, { x: W - outer - w, y: 65, cls: "side", op: 1, max: sideW, rot: 14 });
+        else if (d < -1) pos.set(i, { x: -sideW, y: 65, cls: "done", op: 0, max: sideW, rot: -35 });
+        else pos.set(i, { x: W + 20, y: 65, cls: "side", op: 0, max: sideW, rot: 35 });
+      });
+      showDone = !!pTitle; showNext = !!nTitle;
+      const colL = W / 2 - cw / 2, colR = colL;
+      let r = colR;
+      showPb = !!v.hover && v.hasTimer && !v.over && !v.busy;
+      if (showPb) { pbR = r; pbY = 87; r += 28; }
+      showPg = !!v.paused && !v.over && !showPb;
+      if (showPg) { pgR = r; r += 11; }
+      showTime = v.hasTimer && !!timeText;
+      if (showTime) { timeR = r; timeY = 88; r += timeW + 10; }
+      showLine = v.hasTimer; lineL = colL; lineR = r; lineY = 95;
+    } else if (mode === "alert") {
+      W = 400; H = 150; R = 34;
+    } else if (mode === "complete") {
+      W = NOTCH + 2 * (14 + 6 + tw("Tasks complete") + PAD + GAP); H = 50; R = 16;
+    } else if (mode === "add") {
+      W = NOTCH + 2 * (tw("+ Add tasks", 500) + PAD + GAP); H = 50; R = 16;
+    }
+
+    isl.style.width = px(W);
+    isl.style.height = px(H);
+    isl.style.borderRadius = "0 0 " + R + "px " + R + "px";
+
+    set(tv, mode === "row" || mode === "expanded");
+    set(cv, mode === "complete");
+    set(adv, mode === "add");
+    set(av, mode === "alert");
+    tv.inert = !(mode === "row" || mode === "expanded");
+    adv.inert = mode !== "add";
+    av.inert = mode !== "alert";
+    if (mode !== "alert") q(".a-row").classList.remove("more-open");
+
+    set(ck, showCk); ck.style.left = px(ckX); ck.style.top = px(ckY);
+    set(time, showTime); time.style.right = px(timeR); time.style.top = px(timeY);
+    set(pbtn, showPb); pbtn.style.right = px(pbR); pbtn.style.top = px(pbY);
+    set(pg, showPg); pg.style.right = px(pgR); pg.style.top = px((mode === "expanded" ? timeY : ROW_TOP) + 5);
+    set(nlbl, showNl); nlbl.style.right = px(nlR); nlbl.style.top = px(ROW_TOP + 3);
+    set(line, showLine); line.style.left = px(lineL); line.style.right = px(lineR); line.style.top = px(lineY);
+    set(ldone, showDone); set(lnext, showNext);
+    q(".a-title").textContent = tTitle;
+
+    // task items, keyed by id so each one keeps its element while it moves between slots
+    const track = q(".track");
+    const map = isl._items;
+    const ids = new Set(tasks.map((t) => t.id));
+    for (const [id, el] of map) if (!ids.has(id)) { el.remove(); map.delete(id); }
+    tasks.forEach((t, i) => {
+      const p = pos.get(i) || { x: W + 24, y: ROW_TOP, cls: "next", op: 0, max: 140 };
+      let el = map.get(t.id);
+      const tf = "translate(" + px(p.x) + "," + px(p.y) + ")" + (p.rot ? " rotateY(" + p.rot + "deg)" : "");
+      if (!el) {
+        el = document.createElement("span");
+        el.className = "item noanim";
+        map.set(t.id, el);
+        track.appendChild(el);
+        el.style.transform = tf;
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("noanim")));
+      }
+      if (el.textContent !== t.title) el.textContent = t.title;
+      el.classList.toggle("next", p.cls === "next");
+      el.classList.toggle("done", p.cls === "done");
+      el.classList.toggle("side", p.cls === "side");
+      el.style.transform = tf;
+      el.style.opacity = p.op;
+      el.style.maxWidth = px(p.max);
+    });
+    isl._timeKey = digitsKey(timeText) + (v.over ? "o" : "");
+  }
+
+  // Every animation frame: the line drains continuously; the time text updates in place.
+  function paintTimer(isl, t) {
+    const fb = isl._fb || (isl._fb = isl._q(".fillb"));
+    const tm = isl._tm || (isl._tm = isl._q(".time"));
+    const col = tcol(t.frac);
+    if (isl._col !== col) { isl.style.setProperty("--tc", col); isl._col = col; }
+    const shown = t.over ? 0 : t.shown == null ? t.frac : t.shown;
+    fb.style.width = (shown * 100).toFixed(3) + "%";
+    if (tm.textContent !== t.text) tm.textContent = t.text;
+  }
+
+  /* =========================================================
+     MAIN DEMO
+     ========================================================= */
+  const isl = $("#island");
+  const screenEl = $("#screen");
+  const drop = $("#mb-drop");
+  const mbCue = $("#mb-cue");
+  const DEFAULTS = [
+    { title: "Write the intro", secs: 25 },
+    { title: "Answer three emails", secs: 40 },
+    { title: "Take a walk", secs: null },
+  ];
+  const S = {
+    tasks: [], cur: 0, phase: "task",
+    end: 0, paused: null, frozen: null, over: null, alert: false,
+    busy: false, hover: false, kfocus: false, reveal: false,
+    growStart: 0, demoSecs: 25, touchSwallow: false,
+    prefs: { vis: "always", layout: "one", frost: true, showTask: true, exact: true, titleMax: 160, rm: sysRM },
+    stats: { done: 0, added: 0 },
+  };
+  let uid = 0, endTimer = null, collapseT = null;
+  const cur = () => S.tasks[S.cur];
+  const announce = (m) => { $("#sr").textContent = m; };
+
+  function bump(sel, n) {
+    const el = $(sel);
+    el.textContent = n;
+    el.classList.remove("bump");
+    void el.offsetWidth;
+    el.classList.add("bump");
+  }
+  function pulse() { isl.classList.remove("pulse"); void isl.offsetWidth; isl.classList.add("pulse"); }
+
+  function startCurrent() {
+    const t = cur();
+    S.over = null; S.paused = null; S.frozen = null; S.alert = false;
+    S.end = t && t.total ? Date.now() + t.total * 1000 : 0;
+    S.growStart = Date.now();
+  }
+  function setTasks(list) {
+    clearTimeout(endTimer);
+    S.busy = false;
+    resetCheck();
+    S.tasks = list.slice(0, 3).map((t) => ({ id: ++uid, title: t.title.slice(0, 60), total: t.secs }));
+    S.cur = 0;
+    S.phase = S.tasks.length ? "task" : "add";
+    startCurrent();
+    render();
+    if (S.tasks.length) announce("Now: " + S.tasks[0].title);
+  }
+  function readTasks() {
+    const vals = $$(".task-in").map((i) => i.value.trim()).filter(Boolean);
+    if (!vals.length) return DEFAULTS.map((d) => ({ ...d }));
+    const d = S.demoSecs;
+    return vals.map((title, i) => ({ title, secs: i === 0 ? d : i === 1 ? d + 15 : null }));
+  }
+  const restart = () => setTasks(readTasks());
+  function resetCheck() { isl._q(".check").classList.remove("fill", "checked"); }
+
+  // Check off: fill green → check → hold → the next task turns into place.
+  function complete() {
+    const t = cur();
+    if (S.busy || S.phase !== "task" || !t) return;
+    S.busy = true;
+    S.alert = false;
+    if (t.total && S.over == null && S.paused == null) S.frozen = Math.max(0, S.end - Date.now());
+    render();
+    const ck = isl._q(".check");
+    const rm = S.prefs.rm;
+    ck.classList.add("fill");
+    setTimeout(() => ck.classList.add("checked"), rm ? 0 : 260);
+    setTimeout(() => {
+      pulse();
+      S.cur++;
+      S.stats.done++;
+      bump("#c-done", S.stats.done);
+      if (S.cur >= S.tasks.length) {
+        S.phase = "complete"; S.paused = null; S.over = null; S.frozen = null;
+        announce("Tasks complete");
+        clearTimeout(endTimer);
+        endTimer = setTimeout(() => { S.phase = "add"; render(); }, 4000);
+      } else {
+        startCurrent();
+        S.growStart = Date.now() + 250;
+        announce("Done: " + t.title + ". Now: " + cur().title);
+      }
+      S.busy = false;
+      resetCheck();
+      render();
+    }, rm ? 450 : 1000);
+  }
+  function doneFromAlert() {
+    if (S.busy || !S.alert) return;
+    S.alert = false;
+    S.frozen = 0;
+    render();
+    setTimeout(complete, S.prefs.rm ? 60 : 380);
+  }
+  function addTime(n) {
+    const t = cur();
+    if (S.phase !== "task" || S.busy || !t) return;
+    t.total = n;
+    S.end = Date.now() + n * 1000;
+    S.paused = null; S.over = null; S.frozen = null; S.alert = false;
+    S.stats.added += n;
+    bump("#c-added", S.stats.added);
+    S.growStart = Date.now() + 200;
+    announce(n + " more minutes on " + t.title);
+    render();
+  }
+  function dismiss() {
+    if (!S.alert) return;
+    S.alert = false;
+    S.over = S.end;
+    announce("Time's up dismissed. Counting overtime.");
+    closeDrop();
+    render();
+  }
+  function togglePause() {
+    const t = cur();
+    if (!t || !t.total || S.over != null || S.alert || S.busy || S.phase !== "task") return;
+    if (S.paused != null) { S.end = Date.now() + S.paused; S.paused = null; announce("Resumed"); }
+    else { S.paused = Math.max(0, S.end - Date.now()); announce("Paused"); }
+    render();
+  }
+  function setDemoSecs(v) {
+    S.demoSecs = v;
+    const t = cur();
+    if (S.phase !== "task" || !t || S.busy) return;
+    const now = Date.now();
+    const spent = t.total ? t.total * 1000 - (S.paused != null ? S.paused : S.end - now) : 0;
+    const left = v * 1000 - Math.max(0, spent);
+    t.total = v;
+    S.over = null; S.alert = false;
+    if (S.paused != null) S.paused = Math.max(0, left);
+    else S.end = now + left;
+    render();
+  }
+  function tryCollapse() {
+    if (S.hover) return;
+    if (S.busy) { collapseT = setTimeout(tryCollapse, 300); return; }
+    S.reveal = false;
+    render();
+  }
+
+  /* ---------- timer readout ---------- */
+  function timerState(now) {
+    const t = cur();
+    if (S.phase !== "task" || !t || !t.total) return { has: false, frac: 1, text: "", over: false };
+    if (S.over != null) return { has: true, frac: 0, text: "+" + fmt((now - S.over) / 1000), over: true };
+    const r = Math.max(0, S.frozen != null ? S.frozen : S.paused != null ? S.paused : S.end - now);
+    return { has: true, frac: r / (t.total * 1000), text: fmt(Math.ceil(r / 1000)), over: false };
+  }
+
+  /* ---------- render ---------- */
+  function viewMode() {
+    const P = S.prefs;
+    const hov = (S.hover || S.kfocus) && S.phase === "task";
+    if (S.alert) return "alert";
+    if (S.phase === "complete") return "complete";
+    if (S.phase === "add") return P.vis === "peek" && !S.hover && !S.kfocus ? "hidden" : "add";
+    if (P.layout === "three" || S.reveal) return "expanded";
+    if (P.vis === "peek" && !hov && !S.busy) return "hidden";
+    return "row";
+  }
+  function render() {
+    const P = S.prefs, t = cur();
+    const mode = viewMode();
+    const hov = (S.hover || S.kfocus) && S.phase === "task" && !S.alert;
+    const ts = timerState(Date.now());
+    screenEl.classList.toggle("rm", P.rm);
+    screenEl.classList.toggle("frosted", S.alert && P.frost);
+    layout(isl, {
+      mode,
+      tasks: S.tasks,
+      cur: S.phase === "task" ? S.cur : S.tasks.length,
+      hover: hov,
+      busy: S.busy,
+      // Just the bar: hovering brings the title and time back out of the notch
+      showTitle: P.showTask || hov,
+      exact: P.exact || hov,
+      titleMax: P.titleMax,
+      hasTimer: ts.has,
+      over: ts.over,
+      paused: S.paused != null,
+      timeText: ts.text,
+    });
+
+    const dBtn = $("#dismiss");
+    dBtn.disabled = !S.alert;
+    dBtn.classList.toggle("live", S.alert);
+    mbCue.classList.toggle("ping", S.alert);
+    $("#foot-hint").textContent = S.alert
+      ? "Pick Done or more time, or dismiss it from the menu bar to keep going."
+      : S.over != null ? "Overtime. Check it off when you're done."
+      : mode === "hidden" ? "Peek: move toward the notch to bring Cue out."
+      : "Click the island to see all three tasks. On a phone, tap it first.";
+
+    const setChip = (el, label, val, on) => { el.innerHTML = label + " <b>" + val + "</b>"; el.classList.toggle("is-true", !!on); };
+    setChip($("#r-task"), "Task", S.phase === "task" && t ? S.cur + 1 + " of " + S.tasks.length : S.phase === "complete" ? "all done" : "none", false);
+    setChip($("#r-paused"), "Paused", String(S.paused != null), S.paused != null);
+    setChip($("#r-hover"), "Hover", String(S.hover), S.hover);
+    if (!drop.hidden) renderDrop();
+    tick();
+  }
+
+  /* ---------- per-frame tick ---------- */
+  const leftTxt = $("#c-left"), leftFill = $("#c-left-fill");
+  function tick() {
+    const t = cur(), now = Date.now();
+    if (S.phase === "task" && t && t.total && !S.alert && S.over == null && S.paused == null && S.frozen == null && !S.busy && S.end - now <= 0) {
+      S.alert = true;
+      S.hover = false;
+      S.reveal = false;
+      announce("Time's up: " + t.title);
+      render();
+      return;
+    }
+    const ts = timerState(now);
+    // A new task's line fills from zero first, then drains from there.
+    let shown = ts.frac;
+    if (S.growStart) {
+      const g = S.prefs.rm ? 1 : Math.max(0, Math.min(1, (now - S.growStart) / 600));
+      shown = ts.frac * (1 - Math.pow(1 - g, 3));
+      if (g >= 1) S.growStart = 0;
+    }
+    paintTimer(isl, { frac: ts.frac, shown, text: ts.text, over: ts.over });
+    if (isl._timeKey !== digitsKey(ts.text) + (ts.over ? "o" : "") && !S.alert) { render(); return; }
+    const pct = !ts.has ? null : ts.over || S.alert ? 0 : Math.round(ts.frac * 100);
+    const lt = pct == null ? "—" : pct + "%";
+    if (leftTxt.textContent !== lt) leftTxt.textContent = lt;
+    leftFill.style.width = pct == null ? "0%" : (ts.over || S.alert ? 0 : ts.frac * 100).toFixed(3) + "%";
+    leftFill.style.background = tcol(ts.frac);
+    leftFill.style.boxShadow = "0 0 12px " + tcol(ts.frac);
+  }
+  setInterval(tick, 500); // keeps time's-up honest while the tab is in the background
+
+  /* ---------- island input ---------- */
+  isl.addEventListener("pointerenter", (e) => {
+    if (e.pointerType !== "mouse") return;
+    clearTimeout(collapseT);
+    if (!S.hover) { S.hover = true; render(); }
+  });
+  isl.addEventListener("pointerleave", (e) => {
+    if (e.pointerType !== "mouse") return;
+    S.hover = false;
+    if (S.reveal) collapseT = setTimeout(tryCollapse, 1500);
+    render();
+  });
+  // Phones: the first tap acts as hover, so it never lands on a control by surprise.
+  isl.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" || S.hover || S.alert || S.phase !== "task") return;
+    S.hover = true;
+    S.touchSwallow = true;
+    clearTimeout(collapseT);
+    render();
+  });
+  isl.addEventListener("click", (e) => {
+    if (S.touchSwallow) { S.touchSwallow = false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
+  isl.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) {
+      // Clicking the island itself opens the three-up view; it closes 1.5 s after you move away.
+      if (S.phase === "task" && !S.alert && !S.reveal && S.prefs.layout === "one") { S.reveal = true; render(); }
+      return;
+    }
+    if (b.classList.contains("check")) complete();
+    else if (b.classList.contains("pbtn")) togglePause();
+    else if (b.classList.contains("done")) doneFromAlert();
+    else if (b.classList.contains("more")) isl._q(".a-row").classList.add("more-open");
+    else if (b.classList.contains("back")) isl._q(".a-row").classList.remove("more-open");
+    else if (b.dataset.add) addTime(Number(b.dataset.add));
+    else if (b.classList.contains("adv")) restart();
+  });
+  document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" || isl.contains(e.target) || !S.hover) return;
+    S.hover = false;
+    if (S.reveal) collapseT = setTimeout(tryCollapse, 1500);
+    render();
+  });
+  isl.addEventListener("keydown", (e) => {
+    const onSelf = e.target === isl;
+    if ((e.key === " " || e.key === "Enter") && onSelf) {
+      e.preventDefault();
+      if (S.alert) doneFromAlert();
+      else if (S.phase === "task") complete();
+      else if (S.phase === "add") restart();
+    } else if ((e.key === "p" || e.key === "P") && !e.metaKey && !e.ctrlKey) togglePause();
+    else if (e.key === "Escape") dismiss();
+  });
+  isl.addEventListener("focus", () => { S.kfocus = isl.matches(":focus-visible"); render(); });
+  isl.addEventListener("blur", () => { S.kfocus = false; render(); });
+
+  // Peek: Cue hides in the notch until the cursor comes near it.
+  screenEl.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse" || S.prefs.vis !== "peek" || S.hover || S.alert) return;
+    const r = isl.getBoundingClientRect();
+    const k = parseFloat(getComputedStyle(screenEl.parentElement).getPropertyValue("--k")) || 1;
+    const m = 34 * k;
+    if (e.clientX > r.left - m && e.clientX < r.right + m && e.clientY < r.bottom + m) {
+      S.hover = true;
+      render();
+    }
+  });
+  screenEl.addEventListener("pointerleave", (e) => {
+    if (e.pointerType === "mouse" && S.hover) { S.hover = false; render(); }
+  });
+
+  /* ---------- fake menu bar ---------- */
+  function renderDrop() {
+    drop.innerHTML = "";
+    if (S.alert) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "row"; b.textContent = "Dismiss time's up";
+      b.addEventListener("click", dismiss);
+      drop.appendChild(b);
+    }
+    const ol = document.createElement("ol");
+    S.tasks.forEach((t, i) => {
+      const li = document.createElement("li");
+      li.className = S.phase !== "task" || i < S.cur ? "is-done" : i === S.cur ? "is-cur" : "";
+      li.innerHTML = "<em>" + (i + 1) + "</em><span></span><small>" + (t.total ? t.total + " min" : "") + "</small>";
+      li.querySelector("span").textContent = t.title;
+      ol.appendChild(li);
+    });
+    if (!S.tasks.length) { const li = document.createElement("li"); li.innerHTML = "<span>No tasks yet</span>"; ol.appendChild(li); }
+    drop.appendChild(ol);
+    const p = document.createElement("p");
+    p.textContent = "Edit them under Your tasks, below the screen.";
+    drop.appendChild(p);
+  }
+  function closeDrop() { drop.hidden = true; mbCue.setAttribute("aria-expanded", "false"); }
+  mbCue.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (drop.hidden) { renderDrop(); drop.hidden = false; mbCue.setAttribute("aria-expanded", "true"); }
+    else closeDrop();
+  });
+  document.addEventListener("click", (e) => { if (!drop.hidden && !drop.contains(e.target) && e.target !== mbCue) closeDrop(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !drop.hidden) closeDrop(); });
+  $("#dismiss").addEventListener("click", dismiss);
+
+  function clock() {
+    $("#clock").textContent = new Date().toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
+  }
+  clock();
+  setInterval(clock, 20000);
+
+  /* ---------- controls (every control reflects S.prefs) ---------- */
+  const PRESETS = {
+    default: { vis: "always", layout: "one", showTask: true, exact: true },
+    bar: { vis: "always", layout: "one", showTask: false, exact: false },
+  };
+  const tmRange = $("#tm-range");
+  function syncControls() {
+    const P = S.prefs;
+    $$(".seg[data-control]").forEach((seg) => {
+      const k = seg.dataset.control;
+      const val = k === "frost" ? (P.frost ? "frost" : "island") : P[k];
+      $$("button", seg).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === val)));
+    });
+    $("#sw-task").setAttribute("aria-checked", String(P.showTask));
+    $("#sw-exact").setAttribute("aria-checked", String(P.exact));
+    $("#sw-rm").setAttribute("aria-checked", String(P.rm));
+    $$("#preset button").forEach((b) => {
+      const want = PRESETS[b.dataset.preset];
+      b.setAttribute("aria-pressed", String(Object.keys(want).every((k) => P[k] === want[k])));
+    });
+    tmRange.value = P.titleMax;
+    $("#tm-val").textContent = P.titleMax + " pt";
+    tmRange.style.setProperty("--fill", ((P.titleMax - 160) / 240) * 100 + "%");
+  }
+  $$(".seg[data-control]").forEach((seg) => seg.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const k = seg.dataset.control, v = b.dataset.value;
+    if (k === "frost") S.prefs.frost = v === "frost";
+    else S.prefs[k] = v;
+    if (k === "vis" || k === "layout") { S.reveal = false; S.hover = false; }
+    syncControls();
+    render();
+  }));
+  function wireSwitch(id, key) {
+    $(id).addEventListener("click", () => {
+      S.prefs[key] = !S.prefs[key];
+      syncControls();
+      render();
+    });
+  }
+  wireSwitch("#sw-task", "showTask");
+  wireSwitch("#sw-exact", "exact");
+  wireSwitch("#sw-rm", "rm");
+  tmRange.addEventListener("input", () => { S.prefs.titleMax = Number(tmRange.value); syncControls(); render(); });
+
+  function applyPreset(name, scroll) {
+    Object.assign(S.prefs, PRESETS[name]);
+    S.reveal = false;
+    S.hover = false;
+    syncControls();
+    if (name === "bar") {
+      const t = cur();
+      if (S.phase !== "task" || !t || !t.total || S.over != null || S.alert) restart();
+      else render();
+      announce("Just the bar. Hover the island to see the task.");
+    } else {
+      render();
+      announce("Default view.");
+    }
+    if (scroll) $("#try").scrollIntoView({ behavior: S.prefs.rm ? "auto" : "smooth", block: "start" });
+  }
+  $("#preset").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b) applyPreset(b.dataset.preset, false);
+  });
+  $("#try-bar").addEventListener("click", () => applyPreset("bar", false));
+  $("#bar-apply").addEventListener("click", () => applyPreset("bar", true));
+
+  const range = $("#demo-range");
+  const syncRange = () => {
+    const v = Number(range.value);
+    $("#demo-val").textContent = v + " s";
+    range.style.setProperty("--fill", ((v - 10) / 50) * 100 + "%");
+    return v;
+  };
+  syncRange();
+  range.addEventListener("input", syncRange);
+  range.addEventListener("change", () => setDemoSecs(syncRange()));
+  $("#restart").addEventListener("click", restart);
+  $$(".task-in").forEach((i) => i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); restart(); } }));
+
+  syncControls();
+  setTasks(DEFAULTS.map((d) => ({ ...d })));
+
+  /* =========================================================
+     STATE CARDS (painted with the same layout code)
+     ========================================================= */
+  const mk = (titles) => titles.map((title, i) => ({ id: "m" + i + title, title }));
+  const base = { mode: "row", hover: false, busy: false, showTitle: true, exact: true, titleMax: 160, hasTimer: true, over: false, paused: false, cur: 0 };
+  $$(".island[data-mini]").forEach((m) => {
+    m.setAttribute("aria-hidden", "true");
+    if (m.dataset.mini !== "bar") m.inert = true;
+    else $$("button", m).forEach((b) => { b.tabIndex = -1; });
+  });
+  const mini = (name) => $('[data-mini="' + name + '"]');
+
+  // Peek: hidden in the notch, then out when the cursor comes near
+  const peek = mini("peek");
+  const peekTasks = mk(["Write the intro", "Reply to Sam"]);
+  let peekOpen = false;
+  const paintPeek = (text) => layout(peek, { ...base, mode: peekOpen ? "row" : "hidden", hover: peekOpen, tasks: peekTasks, timeText: text });
+  setInterval(() => { peekOpen = !peekOpen; paintPeek(peek._tm ? peek._tm.textContent : "17:04"); }, 2200);
+
+  const three = mini("three");
+  const threeTasks = mk(["Outline the talk", "Write the intro", "Answer three emails"]);
+  layout(three, { ...base, mode: "expanded", tasks: threeTasks, cur: 1, timeText: "18:20" });
+
+  const alertM = mini("alert");
+  layout(alertM, { ...base, mode: "alert", tasks: mk(["Answer three emails"]), timeText: "" });
+
+  const overM = mini("over");
+  const overTasks = mk(["Write the intro", "Walk"]);
+  layout(overM, { ...base, over: true, tasks: overTasks, timeText: "+2:48" });
+  const over0 = Date.now();
+
+  const doneM = mini("done");
+  let doneStep = 0;
+  const doneLoop = () => layout(doneM, { ...base, mode: doneStep++ % 2 === 0 ? "complete" : "add", tasks: [] });
+  doneLoop();
+  setInterval(doneLoop, 4000);
+
+  // Just the bar: a line under the notch; hover (or tap) for the details
+  const barM = mini("bar");
+  const barTasks = mk(["Write the intro", "Answer three emails"]);
+  let barHover = false, barPtr = "mouse";
+  const paintBar = () => layout(barM, { ...base, hover: barHover, showTitle: barHover, exact: barHover, tasks: barTasks, timeText: barM._tm ? barM._tm.textContent || "18:00" : "18:00" });
+  barM.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { barHover = true; paintBar(); } });
+  barM.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") { barHover = false; paintBar(); } });
+  barM.addEventListener("pointerdown", (e) => { barPtr = e.pointerType; });
+  barM.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (barPtr !== "mouse") { barHover = !barHover; paintBar(); }
+  });
+  paintBar();
+
+  // Each demo line drains a 25-minute task, sped up, every frame.
+  const loop = (now, secs, offset) => 1 - (((now / 1000 + offset) % secs) / secs);
+  function miniTick() {
+    const now = Date.now();
+    const fp = 0.15 + 0.85 * loop(now, 40, 6);
+    paintTimer(peek, { frac: fp, text: fmt(fp * 25 * 60) });
+    if (peek._timeKey !== digitsKey(peek._tm.textContent) + "") paintPeek(peek._tm.textContent);
+    const ft = loop(now, 24, 4);
+    paintTimer(three, { frac: ft, text: fmt(ft * 25 * 60) });
+    if (three._timeKey !== digitsKey(three._tm.textContent)) layout(three, { ...base, mode: "expanded", tasks: threeTasks, cur: 1, timeText: three._tm.textContent });
+    const fb = loop(now, 30, 0);
+    paintTimer(barM, { frac: fb, text: fmt(fb * 25 * 60) });
+    if (barHover && barM._timeKey !== digitsKey(barM._tm.textContent)) paintBar();
+    const ot = "+" + fmt(168 + (now - over0) / 1000);
+    paintTimer(overM, { frac: 0, over: true, text: ot });
+  }
+
+  function frame() {
+    tick();
+    miniTick();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+})();
+</script>
+
+</body>
+</html>
